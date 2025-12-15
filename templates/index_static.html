@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBSCAN - Análisis de Fraude Bancario</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="particles-bg"></div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="badge-container">
+                    <span class="tech-badge">Machine Learning</span>
+                    <span class="tech-badge">DBSCAN</span>
+                    <span class="tech-badge">Detección de Fraude</span>
+                </div>
+                <h1 class="hero-title">
+                    <span class="gradient-text">Análisis Inteligente</span>
+                    <br>de Transacciones Bancarias
+                </h1>
+                <p class="hero-subtitle">
+                    Sistema de detección de fraude mediante clustering DBSCAN
+                    <br>Análisis de {{ "{:,}".format(total_samples) }} transacciones con técnicas avanzadas de ML
+                </p>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card stat-total">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <h3>{{ "{:,}".format(total_samples) }}</h3>
+                        <p>Total de Transacciones</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-fraud">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-content">
+                        <h3>{{ fraud_samples }}</h3>
+                        <p>Transacciones Fraudulentas</p>
+                        <span class="stat-percentage">{{ "%.3f"|format((fraud_samples / total_samples) * 100) }}%</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-legit">
+                    <div class="stat-icon">✓</div>
+                    <div class="stat-content">
+                        <h3>{{ "{:,}".format(legitimate_samples) }}</h3>
+                        <p>Transacciones Legítimas</p>
+                        <span class="stat-percentage">{{ "%.3f"|format((legitimate_samples / total_samples) * 100) }}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            
+            <!-- Section: Evaluation Metrics -->
+            <section class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="title-icon">📈</span>
+                        Métricas de Evaluación del Modelo
+                    </h2>
+                    <p class="section-description">
+                        Indicadores de rendimiento del algoritmo DBSCAN aplicado al conjunto de datos completo
+                    </p>
+                </div>
+                
+                <div class="metrics-grid">
+                    <div class="metric-card metric-primary">
+                        <div class="metric-header">
+                            <span class="metric-label">Purity Score</span>
+                            <span class="metric-tooltip" title="Mide la pureza de los clusters formados">ⓘ</span>
+                        </div>
+                        <div class="metric-value">{{ evaluation_metrics.purity }}</div>
+                        <div class="metric-bar">
+                            <div class="metric-bar-fill" style="width: 99.8%"></div>
+                        </div>
+                        <p class="metric-description">Alto nivel de pureza en la clasificación</p>
+                    </div>
+                    
+                    <div class="metric-card metric-secondary">
+                        <div class="metric-header">
+                            <span class="metric-label">Silhouette Score</span>
+                            <span class="metric-tooltip" title="Evalúa la separación entre clusters">ⓘ</span>
+                        </div>
+                        <div class="metric-value">{{ evaluation_metrics.silhouette }}</div>
+                        <div class="metric-bar">
+                            <div class="metric-bar-fill metric-bar-secondary" style="width: 54.8%"></div>
+                        </div>
+                        <p class="metric-description">Coeficiente de cohesión interna</p>
+                    </div>
+                    
+                    <div class="metric-card metric-tertiary">
+                        <div class="metric-header">
+                            <span class="metric-label">Calinski-Harabasz</span>
+                            <span class="metric-tooltip" title="Ratio de dispersión entre/dentro clusters">ⓘ</span>
+                        </div>
+                        <div class="metric-value">{{ evaluation_metrics.calinski }}</div>
+                        <div class="metric-bar">
+                            <div class="metric-bar-fill metric-bar-tertiary" style="width: 85%"></div>
+                        </div>
+                        <p class="metric-description">Índice de varianza óptimo</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section: Cluster Analysis -->
+            <section class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="title-icon">🎯</span>
+                        Análisis de Clusters (V10 vs V14)
+                    </h2>
+                    <p class="section-description">
+                        Distribución de transacciones en clusters identificados por DBSCAN
+                    </p>
+                </div>
+                
+                <div class="cluster-table-wrapper">
+                    <table class="cluster-table">
+                        <thead>
+                            <tr>
+                                <th>Label</th>
+                                <th>Total de Muestras</th>
+                                <th>Muestras Fraudulentas</th>
+                                <th>Ratio de Fraude</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cluster in cluster_analysis %}
+                            <tr class="cluster-row {% if cluster.label == -1 %}cluster-anomaly{% endif %}">
+                                <td>
+                                    <span class="cluster-label {% if cluster.label == -1 %}label-anomaly{% else %}label-cluster{% endif %}">
+                                        {% if cluster.label == -1 %}
+                                            Anomalía
+                                        {% else %}
+                                            Cluster {{ cluster.label }}
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td class="cluster-total">{{ cluster.total }}</td>
+                                <td class="cluster-malicious">{{ cluster.malicious }}</td>
+                                <td>
+                                    <div class="ratio-bar-container">
+                                        <div class="ratio-bar" style="width: {{ (cluster.malicious / cluster.total * 100)|round(2) }}%"></div>
+                                        <span class="ratio-text">{{ "%.1f"|format(cluster.malicious / cluster.total * 100) }}%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if cluster.malicious / cluster.total > 0.5 %}
+                                        <span class="status-badge status-danger">Alto Riesgo</span>
+                                    {% elif cluster.malicious / cluster.total > 0.1 %}
+                                        <span class="status-badge status-warning">Riesgo Medio</span>
+                                    {% else %}
+                                        <span class="status-badge status-safe">Seguro</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Section: Feature Importance -->
+            <section class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="title-icon">⭐</span>
+                        Características Más Importantes (V14-V18)
+                    </h2>
+                    <p class="section-description">
+                        Ranking de importancia calculado mediante Random Forest
+                    </p>
+                </div>
+                
+                <div class="features-grid">
+                    {% for feature in features_table %}
+                    <div class="feature-card">
+                        <div class="feature-rank">
+                            <span class="rank-number">#{{ feature.rank }}</span>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-name">{{ feature.feature }}</h3>
+                            <div class="feature-importance">
+                                <div class="importance-bar-bg">
+                                    <div class="importance-bar" style="width: {{ (feature.importance|float * 100)|round(2) }}%"></div>
+                                </div>
+                                <span class="importance-value">{{ feature.importance }}</span>
+                            </div>
+                            <p class="feature-percentage">{{ feature.percentage }} de importancia relativa</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- Section: DBSCAN Clustering Visualizations -->
+            <section class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="title-icon">🔍</span>
+                        Visualizaciones DBSCAN - Clustering
+                    </h2>
+                    <p class="section-description">
+                        Resultados del algoritmo DBSCAN en diferentes configuraciones
+                    </p>
+                </div>
+                
+                <div class="viz-grid-2col">
+                    <div class="viz-card">
+                        <h3 class="viz-title">DBSCAN: eps=0.10, min_samples=6</h3>
+                        <img src="{{ url_for('static', filename='images/dbscan_1.png') }}" alt="DBSCAN 1" class="viz-image">
+                        <div class="viz-legend">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #ff8c00;"></span>
+                                <span>Cluster Principal</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #1e90ff;"></span>
+                                <span>Cluster Secundario</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color legend-anomaly"></span>
+                                <span>Anomalía</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="viz-card">
+                        <h3 class="viz-title">Etiquetas Cluster (eps=0.10, min_samples=6)</h3>
+                        <img src="{{ url_for('static', filename='images/dbscan_2.png') }}" alt="DBSCAN 2" class="viz-image">
+                        <div class="viz-legend">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #2ecc71;"></span>
+                                <span>Cluster 0</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color legend-anomaly"></span>
+                                <span>Cluster 1</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section: V10 vs V14 Analysis -->
+            <section class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="title-icon">📍</span>
+                        Análisis Detallado: V10 vs V14
+                    </h2>
+                    <p class="section-description">
+                        Clustering DBSCAN con diferentes parámetros en el espacio V10-V14
+                    </p>
+                </div>
+                
+                <div class="viz-grid-2col">
+                    <div class="viz-card">
+                        <h3 class="viz-title">DBSCAN: eps=0.15, min_samples=13</h3>
+                        <img src="{{ url_for('static', filename='images/dbscan_3.png') }}" alt="DBSCAN 3" class="viz-image">
+                        <div class="viz-info">
+                            <div class="info-badge" style="background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.3);">
+                                <span class="badge-dot" style="background: #e74c3c;"></span>
+                                Anomalías y Outliers
+                            </div>
+                            <div class="info-badge" style="background: rgba(138, 43, 226, 0.1); color: #8a2be2; border: 1px solid rgba(138, 43, 226, 0.3);">
+                                <span class="badge-dot" style="background: #8a2be2;"></span>
+                                Cluster Dense
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="viz-card">
+                        <h3 class="viz-title">Clusters Identificados (eps=0.15, min_samples=13)</h3>
+                        <img src="{{ url_for('static', filename='images/dbscan_4.png') }}" alt="DBSCAN 4" class="viz-image">
+                        <div class="viz-info">
+                            <div class="info-badge info-legit">
+                                <span class="badge-dot"></span>
+                                Cluster Principal
+                            </div>
+                            <div class="info-badge info-fraud">
+                                <span class="badge-dot"></span>
+                                Anomalías Detectadas
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section: All Features Distribution -->
+            <section class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="title-icon">📊</span>
+                        Distribución de Todas las Características
+                    </h2>
+                    <p class="section-description">
+                        Análisis comparativo de distribuciones entre transacciones fraudulentas y legítimas
+                    </p>
+                </div>
+                
+                <div class="visualization-container full-width">
+                    <div class="viz-card">
+                        <img src="{{ url_for('static', filename='images/features_distribution.png') }}" alt="Features Distribution" class="viz-image">
+                        <div class="viz-info">
+                            <div class="info-badge info-fraud">
+                                <span class="badge-dot"></span>
+                                Transacciones Fraudulentas
+                            </div>
+                            <div class="info-badge info-legit">
+                                <span class="badge-dot"></span>
+                                Transacciones Legítimas
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>DBSCAN Fraud Detection</h3>
+                    <p>Sistema avanzado de detección de fraude bancario utilizando algoritmos de clustering</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Tecnologías</h4>
+                    <ul>
+                        <li>Python + Flask</li>
+                        <li>Scikit-learn</li>
+                        <li>DBSCAN Algorithm</li>
+                        <li>Random Forest</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Dataset</h4>
+                    <ul>
+                        <li>Credit Card Fraud Detection</li>
+                        <li>Kaggle Dataset</li>
+                        <li>284,807 transacciones</li>
+                        <li>30 características (PCA)</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 DBSCAN Fraud Detection System | Desarrollado con ❤️ para análisis de fraude</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

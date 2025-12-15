@@ -1,0 +1,29 @@
+*.pyc
+__pycache__/
+venv/
+env/
+ja/
+.env
+.DS_Store
+*.log
+.vscode/
+.idea/
+*.swp
+*.swo
+.pytest_cache/
+htmlcov/
+.coverage
+dist/
+build/
+*.egg-info/
+
+# Excluir dataset grande
+datasets/
+*.csv
+
+# Excluir notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Pero mantener las imágenes generadas
+!static/images/*.png
